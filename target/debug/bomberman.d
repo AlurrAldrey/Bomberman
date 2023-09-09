@@ -1,1 +1,0 @@
-C:\Users\Usuario\desktop\repos\Bomberman\target\debug\bomberman.exe: C:\Users\Usuario\desktop\repos\Bomberman\src\main.rs C:\Users\Usuario\desktop\repos\Bomberman\src\map_object.rs C:\Users\Usuario\desktop\repos\Bomberman\src\matrix.rs
