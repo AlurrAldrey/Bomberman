@@ -27,9 +27,9 @@ fn main() {
     let position_zero = matrix.get(0,0);
     println!("{:?}", position_zero);
 
-    let wall: String = String::from("W");
-    let wall_object = map_object::MapObject::new(&wall);
-    let wall_object = match wall_object {
+    let object: String = String::from("F4");
+    let map_object: Option<map_object::MapObject> = map_object::MapObject::new(&object);
+    let map_object: map_object::MapObject = match map_object {
         Some(map_object) => map_object,
         None => {
             println!("No se pudo generar la clase");
@@ -38,5 +38,5 @@ fn main() {
         },
     };
 
-    println!("{:?}", wall_object);
+    println!("{:?}", map_object);
 }
