@@ -18,16 +18,10 @@ fn main() {
         },
     };
 
-    let mut matrix = matrix::Matrix::new(contents);
+    let matrix = matrix::Matrix::new(contents);
     println!("{:?}", matrix);
 
-    matrix.set(0,0, String::from("HOLA"));
-    println!("{:?}", matrix);
-
-    let position_zero = matrix.get(0,0);
-    println!("{:?}", position_zero);
-
-    let object: String = String::from("F4");
+    let object: String = String::from("DU");
     let map_object: Option<map_object::MapObject> = map_object::MapObject::new(&object);
     let map_object: map_object::MapObject = match map_object {
         Some(map_object) => map_object,
