@@ -9,7 +9,8 @@ impl Matrix{
     pub fn new(input: String)-> Self {
 
         let mut data: Vec<Vec<String>> = Vec::new();
-        let lines = input.split("\r\n");
+        let lines = input.split("\r\n")
+                                                        .filter(|&x| !x.is_empty()); //sacar la linea vacia despues del ultimo salto de linea
         let dimension = lines.clone().count();
 
         for line in lines {
@@ -22,7 +23,6 @@ impl Matrix{
             }
 
             let mut row: Vec<String> = Vec::new();
-            
             for element in elements{
                 let unreferenced_element = String::from(element);
                 row.push(unreferenced_element);
