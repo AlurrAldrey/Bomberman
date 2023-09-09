@@ -1,7 +1,7 @@
 // use std::env;
 use std::fs;
 
-mod map_object;
+#[path = "matrix/map_object.rs"] mod map_object;
 mod matrix;
 
 fn main() {
@@ -17,9 +17,12 @@ fn main() {
             return ();
         },
     };
+    println!("{contents}");
 
     let matrix = matrix::Matrix::new(contents);
     println!("{:?}", matrix);
+
+    matrix.pretty_print();
 
     let object: String = String::from("DU");
     let map_object: Option<map_object::MapObject> = map_object::MapObject::new(&object);

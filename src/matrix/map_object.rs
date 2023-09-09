@@ -5,7 +5,8 @@ pub enum MapObject {
     ShreddingBomb{id: String, range:u32},
     Rock{id: String},
     Wall{id: String},
-    Deviation{id: String, direction: char}
+    Deviation{id: String, direction: char},
+    Nothing{id: String}
 }
 
 impl MapObject{
@@ -41,9 +42,25 @@ impl MapObject{
                 return Some(MapObject::Wall { id: String::from("W") })
             },
             Some('R') => {
-                return Some(MapObject::Rock { id: String::from("W") })
+                return Some(MapObject::Rock { id: String::from("R") })
+            },
+            Some('_') => {
+                return Some(MapObject::Nothing { id: String::from("_") })
             },
             _ => None,
+        }
+    }
+
+    pub fn pretty_print(&self){
+        match self {
+            MapObject::Enemy { id, health } => { print!("{id}{health}") },
+            MapObject::NormalBomb { id, range } => { print!("{id}{range}") },
+            MapObject::ShreddingBomb { id, range } => { print!("{id}{range}") },
+            MapObject::Deviation { id, direction } => { print!("{id}{direction}") },
+            MapObject::Wall { id} => { print!("{id}") },
+            MapObject::Rock { id} => { print!("{id}") },
+            MapObject::Nothing { id} => { print!("{id}") },
+
         }
     }
 }
