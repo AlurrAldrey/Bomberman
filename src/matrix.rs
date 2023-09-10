@@ -3,7 +3,7 @@ use self::map_object::MapObject;
 
 #[derive(Debug)]
 pub struct Matrix {
-    dimension: usize,
+    pub dimension: usize,
     data: Vec<Vec<MapObject>>,
 }
 

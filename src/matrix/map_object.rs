@@ -1,12 +1,17 @@
 #[derive(Debug)]
 pub enum MapObject {
     Enemy{id: String, health: u32},
-    NormalBomb{id: String, range: u32}, //normal y shredding podrian ser el mismo tipo?
-    ShreddingBomb{id: String, range:u32},
+    Bomb{id: String, range: u32, bomb_type: BombType}, //normal y shredding podrian ser el mismo tipo?
     Rock{id: String},
     Wall{id: String},
     Deviation{id: String, direction: char},
     Nothing{id: String}
+}
+
+#[derive(Debug)]
+pub enum BombType {
+    Normal,
+    Shredding
 }
 
 impl MapObject{
@@ -17,12 +22,12 @@ impl MapObject{
             Some('S') => {
                 let range_char = string_rep.chars().nth(1);
                 let range_unsigned = get_u32_from_char(range_char, string_rep);
-                return Some(MapObject::ShreddingBomb { id: String::from("S"), range: range_unsigned })
+                return Some(MapObject::Bomb { id: String::from("S"), range: range_unsigned, bomb_type: BombType::Shredding })
             },
             Some('B') => {
                 let range_char = string_rep.chars().nth(1);
                 let range_unsigned = get_u32_from_char(range_char, string_rep);
-                return Some(MapObject::NormalBomb{ id: String::from("B"), range: range_unsigned })
+                return Some(MapObject::Bomb{ id: String::from("B"), range: range_unsigned, bomb_type: BombType::Normal })
             },
             Some('F') => {
                 let health_char = string_rep.chars().nth(1);
@@ -54,8 +59,7 @@ impl MapObject{
     pub fn pretty_print(&self){
         match self {
             MapObject::Enemy { id, health } => { print!("{id}{health}") },
-            MapObject::NormalBomb { id, range } => { print!("{id}{range}") },
-            MapObject::ShreddingBomb { id, range } => { print!("{id}{range}") },
+            MapObject::Bomb { id, range , bomb_type} => { print!("{id}{range}") },
             MapObject::Deviation { id, direction } => { print!("{id}{direction}") },
             MapObject::Wall { id} => { print!("{id}") },
             MapObject::Rock { id} => { print!("{id}") },
@@ -77,5 +81,5 @@ fn get_u32_from_char(number_char: Option<char>, string_rep: &str) -> u32 {
         },
         None => { println!("No se encontró el valor de {string_rep}") }
     };
-    number_unsigned //TODO: devolver None en caso de error
+    number_unsigned
 }
