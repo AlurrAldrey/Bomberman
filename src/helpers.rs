@@ -1,4 +1,4 @@
-pub fn increment_burst_position(burst_direction: char, burst_position: (usize,usize), i: usize, matrix_dimension: &usize) -> Option<(usize,usize)>{
+pub fn increment_burst_position(burst_direction: char, burst_position: (u32,u32), i: u32, matrix_dimension: &u32) -> Option<(u32,u32)>{
     
     //chequeo que no se intente hacer una explosion fuera de las dimensiones de la matriz
     let mut new_position = burst_position;
@@ -23,4 +23,14 @@ pub fn increment_burst_position(burst_direction: char, burst_position: (usize,us
     }
     
     return Some(new_position);
+}
+
+pub fn u32_to_usize(n:u32) -> usize {
+    //paso a i de u32 a usize
+    let mut n_us = 0;
+    match usize::try_from(n)  {
+        Ok(result) => { n_us = result },
+        Err(_) => {}
+    }
+    return n_us;
 }

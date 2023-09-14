@@ -1,19 +1,24 @@
 pub mod map_object;
 use self::map_object::MapObject;
+use self::map_object::Enemy;
+use self::map_object::Bomb;
 
-use crate::burst::Burst; 
+use crate::burst::Burst;
+use crate::helpers::u32_to_usize; 
+
 
 #[derive(Debug)]
 pub struct Matrix {
-    pub dimension: usize,
+    pub dimension: u32,
     data: Vec<Vec<MapObject>>,
 }
 
 pub enum AffectResponse{
     Deviate{ direction: char }, 
-    Explode { bomb: MapObject}, 
+    Explode { bomb: Bomb}, 
     Stop, 
-    Continue
+    Continue,
+    AffectError{ err: String }
 }
 
 impl Matrix{
@@ -22,13 +27,13 @@ impl Matrix{
         let mut data: Vec<Vec<MapObject>> = Vec::new();
         let lines = input.split("\r\n")
                                                         .filter(|&x| !x.is_empty()); //sacar la linea vacia despues del ultimo salto de linea
-        let dimension = lines.clone().count();
+        let dimension = lines.clone().count() as u32;
 
         let mut i = 0;
         for line in lines {
 
             let elements = line.split(" ");
-            let row_dimension = elements.clone().count();
+            let row_dimension = elements.clone().count() as u32;
             if row_dimension != dimension { 
                 //ver que hacer para resetear el programa
                 println!("La matriz debe ser cuadrada, (chequea no tener un salto de linea de más)");
@@ -52,17 +57,20 @@ impl Matrix{
         }
     }
 
-    pub fn set(&mut self, row: usize, col: usize, value: MapObject) {
+    pub fn set(&mut self, row: u32, col: u32, value: MapObject) {
         if row > self.dimension || col > self.dimension { 
             print!("ERROR!: se intento acceder a un indice mayor a la dimansion de la matriz");
             return
         }
-
+        let row = u32_to_usize(row);
+        let col = u32_to_usize(col);
         self.data[row][col] = value;
     }
 
-    pub fn get(&self, row: usize, col: usize) -> &MapObject {
-        return &self.data[row][col];
+    pub fn get(&self, row: u32, col: u32) -> MapObject {
+        let row = u32_to_usize(row);
+        let col = u32_to_usize(col);
+        return self.data[row][col].clone();
     }
 
     pub fn pretty_print(&self) {
@@ -76,17 +84,38 @@ impl Matrix{
         }
     }
 
-    pub fn affect_position(&self, position_to_affect: (usize,usize), current_burst: &Burst) -> AffectResponse {
+    pub fn affect_position(& mut self, position_to_affect: (u32,u32), current_burst: &Burst) -> AffectResponse {
         let object_affected = self.get(position_to_affect.0.clone(), position_to_affect.1.clone());
         match object_affected {
             MapObject::Nothing { id } => { return AffectResponse::Continue },
             MapObject::Wall{id} =>{ return AffectResponse::Stop },
-            MapObject::Enemy { id, health } => { /*restarle vida al enemigo y matarlo si es el caso
-                                                                luego devolver un Continue*/
-                object_affected.pretty_print()},
-            MapObject::Rock { id } => {/* Continue si es Shredding, Stop si es Normal */},
-            MapObject::Deviation { id, direction } => {/* Deviate con la direccion correspondiente*/},
-            MapObject::Bomb { id, range, bomb_type, position } => {/* Explode(bomba), la reemplazo en la matriz por un Nothing */}
+            MapObject::Enemy(enemy) => { return self.damage_enemy(enemy, position_to_affect, &current_burst.bomb);},
+            MapObject::Rock { id } => {
+                match current_burst.bomb.bomb_type {
+                    map_object::BombType::Shredding => { return AffectResponse::Continue },
+                    map_object::BombType::Normal=> { return AffectResponse::Stop }
+                }
+            },
+            MapObject::Deviation { id, direction } => { return AffectResponse::Deviate { direction }},
+            MapObject::Bomb (bomb) => {/* Explode(bomba), la reemplazo en la matriz por un Nothing */
+                self.set(position_to_affect.0, position_to_affect.1, MapObject::Nothing { id: String::from('_') });
+                return AffectResponse::Explode{ bomb };
+            }
+            _ => { todo!()}
         }
+    }
+
+    fn damage_enemy(& mut self, mut enemy: Enemy, position_to_affect: (u32,u32), bomb: &Bomb) -> AffectResponse {
+        let is_killed = enemy.damage(bomb);
+            match is_killed {
+                Some(is_killed) => {
+                    if is_killed { 
+                        self.set(position_to_affect.0, position_to_affect.1, MapObject::Nothing { id: String::from('_')})
+                    }
+                    self.set(position_to_affect.0, position_to_affect.1, MapObject::Enemy(enemy));
+                    return AffectResponse::Continue
+                },
+                None => { AffectResponse::AffectError{ err: String::from("se intentó atacar a un muerto")}}
+            }
     }
 }
