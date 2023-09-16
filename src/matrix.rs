@@ -42,7 +42,7 @@ impl Matrix{
             let mut row: Vec<MapObject> = Vec::new();
             let mut j = 0;
             for element in elements{
-                let map_object_result = map_object::MapObject::new(&element, (i,j));
+                let map_object_result = map_object::MapObject::new(&element, (j,i));
                 match map_object_result {
                     Some(map_object) => {row.push(map_object);},
                     None => {println!("hubo error al crear el objeto")} //TODO: devolver None
@@ -64,19 +64,19 @@ impl Matrix{
         }
         let row = u32_to_usize(row);
         let col = u32_to_usize(col);
-        self.data[row][col] = value;
+        self.data[col][row] = value;
     }
 
     pub fn get(&self, row: u32, col: u32) -> MapObject {
         let row = u32_to_usize(row);
         let col = u32_to_usize(col);
-        return self.data[row][col].clone();
+        return self.data[col][row].clone();
     }
 
     pub fn pretty_print(&self) {
         for i in 0..(self.dimension) {
             for j in 0..(self.dimension) {
-                let object = self.get(i,j);
+                let object = self.get(j,i);//van al revez para que se imprima como piden
                 object.pretty_print();
                 if j != self.dimension -1 {print!(" ");}
             }
@@ -111,8 +111,9 @@ impl Matrix{
                 Some(is_killed) => {
                     if is_killed { 
                         self.set(position_to_affect.0, position_to_affect.1, MapObject::Nothing { id: String::from('_')})
+                    } else {
+                        self.set(position_to_affect.0, position_to_affect.1, MapObject::Enemy(enemy));
                     }
-                    self.set(position_to_affect.0, position_to_affect.1, MapObject::Enemy(enemy));
                     return AffectResponse::Continue
                 },
                 None => { AffectResponse::AffectError{ err: String::from("se intentó atacar a un muerto")}}

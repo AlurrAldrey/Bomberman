@@ -91,7 +91,17 @@ impl MapObject{
 impl Enemy {
     //devuelve true si mató al enemigo, false si no lo mató
     pub fn damage(& mut self, bomb: &Bomb) -> Option<bool> {
-        if !self.is_hittable_by(bomb){ return Some(false); }
+
+        if !self.is_hittable_by(bomb){ 
+            println!("no le pega");
+            println!("{self:?}{bomb:?}");
+            let test = self.hitted_by.contains(&bomb.position); 
+            println!("{test}");
+            return Some(false); 
+        }
+
+        println!("SI le pega");
+
         
         self.hitted_by.push(bomb.position);
         let result = self.health.checked_sub(1);
@@ -105,7 +115,7 @@ impl Enemy {
     }
 
     fn is_hittable_by(&self, bomb: &Bomb) -> bool {
-       return self.hitted_by.contains(&bomb.position); 
+       return !self.hitted_by.contains(&bomb.position); 
     }
 }
 //mover a helpers
