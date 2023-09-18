@@ -1,4 +1,7 @@
+mod tests;
+
 use std::fs;
+use std::io::Write;
 
 mod enemy;
 mod map_object;
@@ -9,7 +12,6 @@ use affect_response::AffectResponse;
 
 mod bomb;
 use bomb::Bomb;
-use bomb::BombType;
 
 mod burst;
 use burst::Burst;
@@ -18,12 +20,16 @@ mod helpers;
 use helpers::get_args_from_call;
 use helpers::increment_burst_position;
 use helpers::load_bomb_bursts;
+use helpers::initialize_burst_queue;
+
+use matrix::Matrix;
 
 fn main() {
     let args_result = get_args_from_call();
     let contents;
-    let output_file: fs::File;
+    let mut output_file: fs::File;
     let first_explosion;
+    let mut exec_err: String = String::from("");
     match args_result {
         Some((file_content, output, x, y)) => {
             contents = file_content;
@@ -32,41 +38,34 @@ fn main() {
         }
         None => return,
     }
-    println!("{contents}");
-
-    let mut matrix = matrix::Matrix::new(contents);
-    matrix.pretty_print(); //DEBUG
-
-    //vector con las rafagas que se van a efectuar
-    let mut burst_queue: Vec<Burst> = Vec::new();
-    let first_spark = Bomb {
-        id: String::from('*'),
-        range: 0,
-        bomb_type: BombType::Normal,
-        position: first_explosion,
-    }; //representa la 'chispa' que explota la primera bomba
-    let first_response = matrix.affect_position(
-        first_explosion,
-        &Burst::new('U', first_explosion, 0, first_spark),
-    );
-    match first_response {
-        AffectResponse::Explode { bomb } => {
-            load_bomb_bursts(&mut burst_queue, bomb);
-        }
-        _ => {
-            println!("no se explotó una bomba");
-            return ();
-        }
+    let build_matrix = matrix::Matrix::new(contents, &mut exec_err);
+    let mut matrix: matrix::Matrix;
+    match build_matrix {
+        Some(matrix_result) => { matrix = matrix_result },
+        None => { 
+            writeln!(output_file, "{exec_err}").unwrap_or(println!("{exec_err}"));
+            return;
+        } 
     }
 
-    //partir en 2 aca
+    let get_burst_queue = initialize_burst_queue(first_explosion, &mut matrix, &mut exec_err); //vector con las rafagas que se van a efectuar
+    match get_burst_queue {
+        Some(burst_queue) => { iterate_bursts(burst_queue, matrix, output_file); },
+        None => {
+            writeln!(output_file, "{exec_err}").unwrap_or(println!("{exec_err}"));
+            return
+        }
+    }
+    println!("Fin de la ejecución");
+}
+
+//No tengo forma de acortar este matodo dado que cargo fmt me agrega muchas lineas
+fn iterate_bursts(mut burst_queue: Vec<Burst>, mut matrix: matrix::Matrix, mut output_file: fs::File) {
     while burst_queue.len() > 0 {
         let current_burst = burst_queue.remove(0);
-
         //recorro casillero por casillero los lugares afectados por la rafaga
         for i in 1..(current_burst.range + 1) {
-            //incremento la posición en el eje que corresponda
-            let position_to_affect = increment_burst_position(
+            let position_to_affect = increment_burst_position(//incremento la posición en el eje que corresponda
                 current_burst.direction,
                 current_burst.starting_position.clone(),
                 i,
@@ -74,7 +73,6 @@ fn main() {
             );
             match position_to_affect {
                 Some(position_to_affect) => {
-                    println!("{position_to_affect:?}");
                     let response = matrix.affect_position(position_to_affect, &current_burst);
                     match response {
                         AffectResponse::Explode { bomb } => {
@@ -90,14 +88,14 @@ fn main() {
                                 current_burst.bomb.clone(),
                             ));
                         }
-                        _ => todo!(), //manejar error
+                        AffectResponse::AffectError { err } => {writeln!(output_file, "{err}").unwrap_or(println!("{err}"));} //manejar error
                     }
                 }
                 None => {
-                    break;
+                    break;//la posición calculada estaba fuera de la matriz
                 }
             }
         }
-        matrix.pretty_print(); //DEBUG
     }
+    writeln!(output_file, "{}", matrix.to_string()).unwrap_or(println!("escritura de resultado"));
 }

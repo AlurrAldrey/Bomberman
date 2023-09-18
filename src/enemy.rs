@@ -1,6 +1,6 @@
 use crate::bomb::Bomb;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Enemy {
     pub id: String,
     pub health: u32,
@@ -13,11 +13,10 @@ impl Enemy {
         if !self.is_hittable_by(bomb) {
             return Some(false);
         }
-
-        self.hitted_by.push(bomb.position);
         let result = self.health.checked_sub(1);
         match result {
             Some(new_health) => {
+                self.hitted_by.push(bomb.position);
                 self.health = new_health;
                 return Some(self.health == 0);
             }

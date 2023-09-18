@@ -1,4 +1,6 @@
 use crate::Bomb;
+
+#[derive(PartialEq, Debug)]
 pub enum AffectResponse {
     Deviate { direction: char },
     Explode { bomb: Bomb },

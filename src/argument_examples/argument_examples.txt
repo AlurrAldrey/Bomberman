@@ -1,0 +1,3 @@
+cargo run -- src/input_tests/test1.txt output 0 0
+cargo run -- src/input_tests/test2.txt output 2 4
+cargo run -- src/input_tests/test3.txt output 0 4
