@@ -6,6 +6,15 @@ use std::env;
 use std::fs;
 use std::io::Write;
 
+pub fn write_file(mut output_file: fs::File, exec_err: String) {
+    let write = writeln!(output_file, "{exec_err}");
+            match write {
+                Ok(()) => {},
+                Err(err) => println!("{err}"),
+            }
+
+}
+
 pub fn get_args_from_call() -> Option<(String, fs::File, u32, u32)> {
     // Parse command-line arguments
     let args: Vec<String> = env::args().collect();
@@ -79,40 +88,38 @@ pub fn increment_burst_position(
     matrix_dimension: &u32,
 ) -> Option<(u32, u32)> {
     //chequeo que no se intente hacer una explosion fuera de las dimensiones de la matriz
-    let mut new_position = burst_position;
+    // let mut new_positionk = burst_position;
     match burst_direction {
         'D' => {
             if burst_position.1 + i < matrix_dimension.clone() {
-                new_position = (burst_position.0, burst_position.1 + i)
+                return Some((burst_position.0, burst_position.1 + i));
             } else {
                 return None;
             }
         }
         'R' => {
             if burst_position.0 + i < matrix_dimension.clone() {
-                new_position = (burst_position.0 + i, burst_position.1)
+                return Some((burst_position.0 + i, burst_position.1));
             } else {
                 return None;
             }
         }
         'U' => {
             if let Some(result) = burst_position.1.checked_sub(i) {
-                new_position = (burst_position.0, result)
+                return Some((burst_position.0, result));
             } else {
                 return None;
             };
         }
         'L' => {
             if let Some(result) = burst_position.0.checked_sub(i) {
-                new_position = (result, burst_position.1)
+                return Some((result, burst_position.1))
             } else {
                 return None;
             };
         }
         _ => return None,
     }
-
-    return Some(new_position);
 }
 
 pub fn u32_to_usize(n: u32) -> usize {
@@ -148,13 +155,12 @@ pub fn load_bomb_bursts(burst_queue: &mut Vec<Burst>, bomb: Bomb) {
     burst_queue.push(Burst::new('L', bomb.position, bomb.range.clone(), bomb));
 }
 
-pub fn get_u32_from_char(number_char: Option<char>, string_rep: &str) -> Option<u32> {
-    let mut number_unsigned: u32 = 0;
+pub fn get_u32_from_char(number_char: Option<char>) -> Option<u32> {
     match number_char {
         Some(health) => {
             let health_todigit = health.to_digit(10);
             match health_todigit {
-                Some(digit) => number_unsigned = digit,
+                Some(digit) => return Some(digit),
                 None => {
                     return None;
                 }
@@ -164,7 +170,6 @@ pub fn get_u32_from_char(number_char: Option<char>, string_rep: &str) -> Option<
             return None;
         }
     };
-    Some(number_unsigned)
 }
 
 pub fn initialize_burst_queue(first_explosion:(u32,u32), matrix: &mut Matrix, exec_err: &mut String) -> Option<Vec<Burst>> {
@@ -177,11 +182,11 @@ pub fn initialize_burst_queue(first_explosion:(u32,u32), matrix: &mut Matrix, ex
     match first_response {
         AffectResponse::Explode { bomb } => {
             load_bomb_bursts(&mut burst_queue, bomb);
-            return Some(burst_queue)
+            Some(burst_queue)
         }
         _ => {
             exec_err.push_str("no se explotó una bomba");
-            return None;
+            None
         }
     }
 }

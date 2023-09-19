@@ -90,7 +90,7 @@ impl MapObject {
 
     fn create_bomb(id: char, string_rep: &str, position: (u32, u32)) -> Option<MapObject>{
         let range_unsigned ;
-        match helpers::get_u32_from_char(string_rep.chars().nth(1), string_rep) {
+        match helpers::get_u32_from_char(string_rep.chars().nth(1)) {
             Some(n) => { range_unsigned = n },
             None => { return None }
         }
@@ -112,7 +112,7 @@ impl MapObject {
 
     fn create_enemy(string_rep: &str) -> Option<MapObject> {
         let health_unsigned ;
-        match helpers::get_u32_from_char(string_rep.chars().nth(1), string_rep) {
+        match helpers::get_u32_from_char(string_rep.chars().nth(1)) {
             Some(n) => { health_unsigned = n },
             None => { return None }
         }

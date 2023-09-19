@@ -21,13 +21,15 @@ use helpers::get_args_from_call;
 use helpers::increment_burst_position;
 use helpers::load_bomb_bursts;
 use helpers::initialize_burst_queue;
+use helpers::write_file;
 
 use matrix::Matrix;
+
 
 fn main() {
     let args_result = get_args_from_call();
     let contents;
-    let mut output_file: fs::File;
+    let output_file: fs::File;
     let first_explosion;
     let mut exec_err: String = String::from("");
     match args_result {
@@ -43,7 +45,7 @@ fn main() {
     match build_matrix {
         Some(matrix_result) => { matrix = matrix_result },
         None => { 
-            writeln!(output_file, "{exec_err}").unwrap_or(println!("{exec_err}"));
+            write_file(output_file, exec_err);
             return;
         } 
     }
@@ -52,7 +54,7 @@ fn main() {
     match get_burst_queue {
         Some(burst_queue) => { iterate_bursts(burst_queue, matrix, output_file); },
         None => {
-            writeln!(output_file, "{exec_err}").unwrap_or(println!("{exec_err}"));
+            write_file(output_file, exec_err);
             return
         }
     }
@@ -61,13 +63,13 @@ fn main() {
 
 //No tengo forma de acortar este matodo dado que cargo fmt me agrega muchas lineas
 fn iterate_bursts(mut burst_queue: Vec<Burst>, mut matrix: matrix::Matrix, mut output_file: fs::File) {
-    while burst_queue.len() > 0 {
+    while !burst_queue.is_empty() {
         let current_burst = burst_queue.remove(0);
         //recorro casillero por casillero los lugares afectados por la rafaga
         for i in 1..(current_burst.range + 1) {
             let position_to_affect = increment_burst_position(//incremento la posición en el eje que corresponda
                 current_burst.direction,
-                current_burst.starting_position.clone(),
+                current_burst.starting_position,
                 i,
                 &matrix.dimension,
             );
@@ -97,5 +99,5 @@ fn iterate_bursts(mut burst_queue: Vec<Burst>, mut matrix: matrix::Matrix, mut o
             }
         }
     }
-    writeln!(output_file, "{}", matrix.to_string()).unwrap_or(println!("escritura de resultado"));
+    write_file(output_file, matrix.to_string());
 }
