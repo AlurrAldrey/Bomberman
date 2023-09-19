@@ -1,6 +1,6 @@
 use crate::burst::Burst;
-use crate::Bomb;
 use crate::AffectResponse;
+use crate::Bomb;
 use crate::Matrix;
 use std::env;
 use std::fs;
@@ -8,11 +8,10 @@ use std::io::Write;
 
 pub fn write_file(mut output_file: fs::File, exec_err: String) {
     let write = writeln!(output_file, "{exec_err}");
-            match write {
-                Ok(()) => {},
-                Err(err) => println!("{err}"),
-            }
-
+    match write {
+        Ok(()) => {}
+        Err(err) => println!("{err}"),
+    }
 }
 
 pub fn get_args_from_call() -> Option<(String, fs::File, u32, u32)> {
@@ -32,53 +31,51 @@ pub fn get_args_from_call() -> Option<(String, fs::File, u32, u32)> {
 
     //Creo el archivo de output en el directorio
     let output_file_path = format!("{}/output.txt", output_dir);
-    let create_file = fs::File::create(&output_file_path);
-    let mut output_file: fs::File;
-    match create_file {
-        Ok(file) => { output_file = file},
-        Err(err) => { println!("{err}"); return None;}
-    }
+    let create_file = fs::File::create(output_file_path);
+    let output_file: fs::File = match create_file {
+        Ok(file) => file,
+        Err(err) => {
+            println!("{err}");
+            return None;
+        }
+    };
 
     //leo el input
     let read = fs::read_to_string(input_file);
-    let file_contents: String;
-    match read {
-        Ok(content) => file_contents = content,
+
+    let file_contents: String = match read {
+        Ok(content) => content,
         Err(err) => {
-            writeln!(output_file, "{err}").unwrap_or(println!("{err}"));
+            let error_string = format!("{err}");
+            write_file(output_file, error_string);
             return None;
         }
-    }
+    };
 
     let parse_x_y = parse_x_y(args, &output_file);
-    match parse_x_y {
-        Some((x, y)) => {
-            return Some((file_contents, output_file, x, y));
-        }
-        None => return None,
-    }
+    parse_x_y.map(|(x, y)| (file_contents, output_file, x, y))
 }
 
 fn parse_x_y(args: Vec<String>, mut output_file: &fs::File) -> Option<(u32, u32)> {
     let parse_x = args[3].parse::<u32>();
-    let x;
-    match parse_x {
-        Ok(res) => x = res,
+
+    let x = match parse_x {
+        Ok(res) => res,
         Err(err) => {
             writeln!(output_file, "No se pudo interpretar 'x' {err}").unwrap_or(println!("{err}"));
             return None;
         }
-    }
+    };
     let parse_y = args[4].parse::<u32>();
-    let y;
-    match parse_y {
-        Ok(res) => y = res,
+
+    let y = match parse_y {
+        Ok(res) => res,
         Err(err) => {
             writeln!(output_file, "No se pudo interpretar 'y' {err}").unwrap_or(println!("{err}"));
             return None;
         }
-    }
-    return Some((x, y));
+    };
+    Some((x, y))
 }
 
 pub fn increment_burst_position(
@@ -91,88 +88,60 @@ pub fn increment_burst_position(
     // let mut new_positionk = burst_position;
     match burst_direction {
         'D' => {
-            if burst_position.1 + i < matrix_dimension.clone() {
-                return Some((burst_position.0, burst_position.1 + i));
+            if burst_position.1 + i < *matrix_dimension {
+                Some((burst_position.0, burst_position.1 + i))
             } else {
-                return None;
+                None
             }
         }
         'R' => {
-            if burst_position.0 + i < matrix_dimension.clone() {
-                return Some((burst_position.0 + i, burst_position.1));
+            if burst_position.0 + i < *matrix_dimension {
+                Some((burst_position.0 + i, burst_position.1))
             } else {
-                return None;
+                None
             }
         }
-        'U' => {
-            if let Some(result) = burst_position.1.checked_sub(i) {
-                return Some((burst_position.0, result));
-            } else {
-                return None;
-            };
-        }
-        'L' => {
-            if let Some(result) = burst_position.0.checked_sub(i) {
-                return Some((result, burst_position.1))
-            } else {
-                return None;
-            };
-        }
-        _ => return None,
+        'U' => burst_position
+            .1
+            .checked_sub(i)
+            .map(|result| (burst_position.0, result)),
+        'L' => burst_position
+            .0
+            .checked_sub(i)
+            .map(|result| (result, burst_position.1)),
+        _ => None,
     }
 }
 
 pub fn u32_to_usize(n: u32) -> usize {
     //paso a i de u32 a usize
     let mut n_us = 0;
-    match usize::try_from(n) {
-        Ok(result) => n_us = result,
-        Err(_) => {}
+    if let Ok(result) = usize::try_from(n) {
+        n_us = result
     }
-    return n_us;
+    n_us
 }
 
 //Carga 4 rafagas correspondientes a una bomba
 pub fn load_bomb_bursts(burst_queue: &mut Vec<Burst>, bomb: Bomb) {
-    burst_queue.push(Burst::new(
-        'U',
-        bomb.position,
-        bomb.range.clone(),
-        bomb.clone(),
-    ));
-    burst_queue.push(Burst::new(
-        'R',
-        bomb.position,
-        bomb.range.clone(),
-        bomb.clone(),
-    ));
-    burst_queue.push(Burst::new(
-        'D',
-        bomb.position,
-        bomb.range.clone(),
-        bomb.clone(),
-    ));
-    burst_queue.push(Burst::new('L', bomb.position, bomb.range.clone(), bomb));
+    burst_queue.push(Burst::new('U', bomb.position, bomb.range, bomb.clone()));
+    burst_queue.push(Burst::new('R', bomb.position, bomb.range, bomb.clone()));
+    burst_queue.push(Burst::new('D', bomb.position, bomb.range, bomb.clone()));
+    burst_queue.push(Burst::new('L', bomb.position, bomb.range, bomb));
 }
 
 pub fn get_u32_from_char(number_char: Option<char>) -> Option<u32> {
     match number_char {
-        Some(health) => {
-            let health_todigit = health.to_digit(10);
-            match health_todigit {
-                Some(digit) => return Some(digit),
-                None => {
-                    return None;
-                }
-            }
-        }
-        None => {
-            return None;
-        }
-    };
+        Some(health) => health.to_digit(10),
+        None => None,
+    }
 }
 
-pub fn initialize_burst_queue(first_explosion:(u32,u32), matrix: &mut Matrix, exec_err: &mut String) -> Option<Vec<Burst>> {
+pub fn initialize_burst_queue(
+    first_explosion: (u32, u32),
+    matrix: &mut Matrix,
+    exec_err: &mut String,
+) -> Option<Vec<Burst>> {
     let mut burst_queue: Vec<Burst> = Vec::new(); //vector con las rafagas que se van a efectuar
     let first_spark = Bomb::new(first_explosion); //representa la 'chispa' que explota la primera bomba
     let first_response = matrix.affect_position(

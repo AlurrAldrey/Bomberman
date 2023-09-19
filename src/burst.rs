@@ -1,5 +1,6 @@
 use crate::Bomb;
 
+///representa una rafaga de una explosión
 #[derive(Debug)]
 pub struct Burst {
     pub direction: char,
